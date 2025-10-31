@@ -310,8 +310,8 @@ def crear_df_con_elasticidades(matriz_sensibilidades):
     
     return elasticidades, valores_bps_wacc, valores_bps
 
-def get_current_per(ticker):
-    ticker = yf.Ticker(ticker)
-    per = ticker.info.get("trailingPE")
+def calcular_desvios(todas_las_matrices):
+    stacked = np.stack(todas_las_matrices)
+    desvios = stacked.std(axis=0, ddof=1)
     
-    return per
+    return desvios

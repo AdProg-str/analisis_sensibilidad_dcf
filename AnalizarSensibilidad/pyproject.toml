@@ -1,13 +1,22 @@
 [project]
-name = "Sensibility_Analysis"
+name = "sensibility_analysis"          # el nombre aquí ya no importa
 version = "0.1.0"
-description = "Add your description here"
 requires-python = ">=3.11"
+description = "App Streamlit para análisis de sensibilidad DCF"
 dependencies = [
-    "numpy>=2.3.3",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.3",
-    "plotly>=6.3.0",
-    "streamlit>=1.50.0",
-    "yfinance>=0.2.66",
+  "numpy>=2.3.0",
+  "pandas>=2.2.0",
+  "openpyxl>=3.1.0",
+  "plotly>=5.20.0",        # (recomiendo 5.x estable)
+  "streamlit>=1.31.0",
+  "yfinance>=0.2.30",
+  "statsmodels>=0.14.0"
 ]
+
+# 👇 Esto es lo importante: NO instalar el proyecto como paquete
+[tool.uv]
+package = false
+
+# Si el entorno usa Poetry, también lo desactivamos por las dudas
+[tool.poetry]
+package-mode = false

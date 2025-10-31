@@ -718,69 +718,10 @@ if st.session_state.processed_companies:
         st.markdown("*Average percentage change across all uploaded companies*")
         
         st.dataframe(average_matrix)
-    
-    # Aggregate sensitivity analysis
-    # if len(all_sensitivity_matrices) > 1:
-    #     st.subheader("Aggregate Sensitivity Analysis (Average Across All Companies)")
-    #     st.markdown("*Average percentage change across all uploaded companies*")
-    #     st.caption("⚠️ Note: Calculated using a common WACC/g grid centered on the average values across all companies")
         
-    #     # Calculate average WACC and g across all companies to create a shared grid
-    #     avg_base_wacc = np.mean([val['wacc_used'] for val in company_valuations.values()])
-    #     avg_base_g = np.mean([val['g_used'] for val in company_valuations.values()])
-        
-    #     # Create common sensitivity grid
-    #     common_wacc_values = calcular_waccs(avg_base_wacc, cambio=wacc_sensitivity_range/5, n=5)
-    #     common_g_values = calcular_gs(avg_base_g, cambio=g_sensitivity_range/5, n=5)
-        
-    #     # Recalculate sensitivity matrices for all companies using the common grid
-    #     common_sensitivity_matrices = []
-    #     for ticker, valuation_data in company_valuations.items():
-    #         common_matrix = dcf_sensitivity_matrix(
-    #             wacc_values=common_wacc_values,
-    #             g_values=common_g_values,
-    #             free_cash_flows=valuation_data['fcf'],
-    #             ticker=ticker,
-    #             netdebt=valuation_data['netdebt']
-    #         )
-    #         common_sensitivity_matrices.append(common_matrix)
-        
-    #     # Now average the matrices (they all have the same axes)
-    #     avg_matrix = pd.concat(common_sensitivity_matrices).groupby(level=0).mean()
-        
-    #     # Display based on selected visualization type
-    #     if viz_type in ["Table", "Both"]:
-    #         st.dataframe(
-    #             avg_matrix.style.format("{:.2f}%"),
-    #             use_container_width=True
-    #         )
-        
-    #     if viz_type in ["Heatmap", "Both"]:
-    #         # Create interactive Plotly heatmap for average
-    #         fig_avg = go.Figure(data=go.Heatmap(
-    #             z=avg_matrix.values,
-    #             x=avg_matrix.columns,
-    #             y=avg_matrix.index,
-    #             colorscale='RdYlGn',
-    #             text=avg_matrix.values,
-    #             texttemplate='%{text:.2f}%',
-    #             textfont={"size": 10},
-    #             colorbar=dict(title="% Change"),
-    #             hoverongaps=False,
-    #             hovertemplate='WACC: %{x}<br>g: %{y}<br>Avg Change: %{z:.2f}%<extra></extra>'
-    #         ))
-            
-    #         fig_avg.update_layout(
-    #             title="Average Sensitivity Across All Companies",
-    #             xaxis_title="WACC",
-    #             yaxis_title="Growth Rate (g)",
-    #             height=500,
-    #             font=dict(size=11)
-    #         )
-            
-    #         st.plotly_chart(fig_avg, use_container_width=True)
-    
-    # st.divider()
+        st.markdown("*Standard Deviation*")
+        desvio_matrix = pd.DataFrame(calcular_desvios(all_sensitivity_matrices), index=average_matrix.index, columns=average_matrix.columns)
+        st.dataframe(desvio_matrix)
     
     # Download Excel Report
     st.markdown(
@@ -826,9 +767,7 @@ if st.session_state.processed_companies:
             
             if absolute_changes and len(all_sensitivity_matrices) > 1:
                 average_matrix.to_excel(writer, sheet_name='Averages', startrow=1)
-            # # Average sensitivity matrix (if multiple companies)
-            # if avg_matrix is not None and len(all_sensitivity_matrices) > 1:
-            #     avg_matrix.to_excel(writer, sheet_name='Average Sensitivity')
+                desvio_matrix.to_excel(writer, sheet_name='Std', startrow=1)
         
         output.seek(0)
         return output

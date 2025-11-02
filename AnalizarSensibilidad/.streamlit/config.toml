@@ -1,8 +1,3 @@
-[server]
-headless = true
-address = "0.0.0.0"
-port = 5000
-
 # .streamlit/config.toml
 [theme]
 base = "dark"  # importante para controles y scrollbars

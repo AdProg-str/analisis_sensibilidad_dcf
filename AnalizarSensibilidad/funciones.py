@@ -257,6 +257,35 @@ def dcf_sensitivity_matrix(
     df.index.name = "WACC/g"
     df.columns.name = "WACC"
     return df
+    
+def dcf_scenarios(
+    wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use
+):
+    """
+    Construye una matriz (DataFrame) con precio/acción para todos los pares (WACC, g).
+    Filas = g ; Columnas = WACC
+    """
+    waccs = np.atleast_1d(np.array(wacc_values, dtype=float))
+    gs = np.atleast_1d(np.array(g_values, dtype=float))
+
+    data = np.empty((gs.size, waccs.size), dtype=float)
+    for i, gi in enumerate(gs):
+        for j, wj in enumerate(waccs):
+            data[i, j] = valuacion_DCF(
+                free_cash_flows=free_cash_flows,
+                wacc=wj,
+                g=gi,
+                ticker=ticker, netdebt= netdebt
+            )[0]  
+
+    df = pd.DataFrame(
+        data,
+        index=[f"{gi:.4%}" for gi in gs],
+        columns=[f"{wj:.4%}" for wj in waccs],
+    )
+    df.index.name = "WACC/g"
+    df.columns.name = "WACC"
+    return df
 
 def crear_df_con_elasticidades(matriz_sensibilidades):
     

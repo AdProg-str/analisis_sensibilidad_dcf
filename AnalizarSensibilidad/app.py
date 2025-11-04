@@ -620,6 +620,8 @@ if st.session_state.processed_companies:
         horizontal=True,
         help="Choose how to display sensitivity analysis results"
     )
+
+    boton_precios = st.toggle('Changes/Prices')
     
     all_sensitivity_matrices = []
     
@@ -654,6 +656,15 @@ if st.session_state.processed_companies:
             netdebt=valuation_data['netdebt'],
             g_to_use=g_rate
             )
+
+            prices_matrix = dcf_scenarios(
+            wacc_values=wacc_values,
+            g_values=g_values,
+            free_cash_flows=valuation_data['fcf'],
+            ticker=ticker,
+            netdebt=valuation_data['netdebt'],
+            g_to_use=g_rate
+            )
             
             elasticidades_df = crear_df_con_elasticidades(sensitivity_matrix)[0]
             
@@ -667,10 +678,16 @@ if st.session_state.processed_companies:
             
             # Display based on selected visualization type
             if viz_type in ["Table", "Both"]:
-                st.dataframe(
-                    sensitivity_matrix.style.format("{:.2f}%"),
-                    use_container_width=True
-                )
+                if not boton_precios: 
+                    st.dataframe(
+                        sensitivity_matrix.style.format("{:.2f}%"),
+                        use_container_width=True
+                    )
+                else:
+                    st.dataframe(
+                        prices_matrix,
+                        use_container_width=True
+                    )
                 
                 st.dataframe(elasticidades_df.style.format({
                             'Cambio en BPS WACC': '{:.2f}',
@@ -714,6 +731,7 @@ if st.session_state.processed_companies:
         indice = valores_g
         
         average_matrix = pd.DataFrame(sum([df.to_numpy() for df in all_sensitivity_matrices]) / len(all_sensitivity_matrices), columns=np.round(columnas), index=indice)
+        
         st.subheader("Aggregate Sensitivity Analysis (Average Across All Companies)")
         st.markdown("*Average percentage change across all uploaded companies*")
         
@@ -722,6 +740,12 @@ if st.session_state.processed_companies:
         st.markdown("*Standard Deviation*")
         desvio_matrix = pd.DataFrame(calcular_desvios(all_sensitivity_matrices), index=average_matrix.index, columns=average_matrix.columns)
         st.dataframe(desvio_matrix)
+
+    if len(all_sensitivity_matrices) > 1:  
+        elasti_prom = pd.DataFrame(sum([df.to_numpy() for df in all_elasticidades]) / len(all_elasticidades), columns=["Cambio Relativo WACC (%)", "Elasticidades WACC Promedio", "Cambio Relativo g (%)", "Elasticidades g Promedio"])
+        desvio_elast = pd.DataFrame(calcular_desvios(all_elasticidades), columns=elasti_prom.columns)
+        
+        st.dataframe(elasti_prom)
     
     # Download Excel Report
     st.markdown(
@@ -768,6 +792,10 @@ if st.session_state.processed_companies:
             if absolute_changes and len(all_sensitivity_matrices) > 1:
                 average_matrix.to_excel(writer, sheet_name='Averages', startrow=1)
                 desvio_matrix.to_excel(writer, sheet_name='Std', startrow=1)
+
+            if len(all_sensitivity_matrices) > 1:
+                elasti_prom.to_excel(writer, sheet_name='Prom Elast', startrow=1)
+                desvio_elast.to_excel(writer, sheet_name='Prom Elast', startrow=len(elasti_prom.iloc[:,0])+3)
         
         output.seek(0)
         return output

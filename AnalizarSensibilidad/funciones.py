@@ -9,17 +9,36 @@ class Accion():
         self.wacc = wacc
         self.shares = shares  
 
+  
+apple = Accion(0.102, 15408)
+amazon = Accion(0.109, 10721)
+broadcom = Accion(0.149, 4778)
+berkshire = Accion(0.077, 1)
+google = Accion(0.101, 12447)
+jpmorgan = Accion(0.071, 2879)
+meta = Accion(0.109, 2614)
+microsoft = Accion(0.097, 7469)
+nvidia = Accion(0.151, 24940)
+tesla = Accion(0.132, 3498)
+meli = Accion(0.209, 50.73)
+abbv = Accion(0.066, 1770)
+costco = Accion(0.084, 445)
+homedepot = Accion(0.085, 1002)
+jhonson = Accion(0.065, 2418)
+lilly = Accion(0.087, 900)
+master = Accion(0.091, 906)
+netflix = Accion(0.105, 434)
+oracle = Accion(0.109, 2866)
+palantir = Accion(0.157, 2497)
+visa = Accion(0.089, 1967)
+walmart = Accion(0.083, 8081)
+exxon = Accion(0.07, 4296)
+
+
 acciones = {
-    "AAPL": Accion(0.102, 15408),
-    "AMZN": Accion(0.109, 10721),
-    "AVGO": Accion(0.149, 4778),
-    "GOOGL": Accion(0.101, 12447),
-    "META": Accion(0.108, 2614),
-    "MSFT": Accion(0.097, 7469),
-    "NVDA": Accion(0.151, 24940),
-    "TSLA": Accion(0.132, 3498),
-    "ORCL": Accion(0.109, 2866),
-    "WMT": Accion(0.083, 8081),
+    "AAPL": apple, "AMZN": amazon, "AVGO": broadcom, "BRK": berkshire, "GOOGL": google, "JPM": jpmorgan, "META": meta, "MSFT": microsoft, 
+    "NVDA": nvidia, "TSLA": tesla, "MELI": meli, "ABBV": abbv, "COST": costco, "HD": homedepot, "JNJ": jhonson, "LLY": lilly, 
+    "MA": master, "NFLX": netflix, "ORCL": oracle, "PLTR": palantir, "V": visa, "WMT": walmart, "XOM": exxon
 }
 
 def limpiar_excel(excel):
@@ -39,7 +58,7 @@ def limpiar_excel(excel):
 
 def extraer_partidas(excel_limpio):
     patterns = [
-        r'^(?!.*\b(?:Re)?Payments\b).*(?:Total Debt$|Debt$|Net(?=.*\bdebt\b))',
+        r'Total Debt$|Debt$|Net(?=.*\bdebt\b)',
         r'Equivalents\s\w*\sShort|\bEquivalents\b.*\bMarketable\b|\bCash\b.*Marketable|\bCash\b.*Short-term|\bCash\b.*Equivalents$',
         r'^\s*?Tax Rate\s\(\%\)',
         r'^\s*?Revenue$|^\s*?Net Revenue',
@@ -84,11 +103,12 @@ def normalizar_indice(nombre):
         if re.search(patron, nombre, re.IGNORECASE):
             return nuevo
     
-    return nombre  
+    return nombre  # si no matchea, lo deja igual
 
 
 def limpiar_partidas(partidas):
-    partidas = partidas[~partidas.isnull().all(axis=1)] 
+    partidas = partidas[~partidas.isnull().all(axis=1)] # Elimino las filas que no poseen datos
+
     partidas = partidas.fillna(0)
 
     partidas = partidas.drop_duplicates()
@@ -153,7 +173,7 @@ def calcular_nuevas_partidas(partidas):
 
 def elegir_ultimo_fcff_estable(df,
                                fila_fcff="FCFF",
-                               k_pos=4,                           
+                               k_pos=4,                  # racha mínima de años positivos,            
                                ):
     """
     Devuelve:
@@ -161,14 +181,17 @@ def elegir_ultimo_fcff_estable(df,
       - serie_fcff_cortada (hasta anio_corte inclusive)
     Asume df con años en columnas y una fila 'FCFF'.
     """
-    fcff = df.loc[fila_fcff].astype(float)  
+    fcff = df.loc[fila_fcff].astype(float)  # Serie: index=fila, columns=años -> tomamos fila
 
+    # 1) Condición de positividad y racha de k años
     positivos = (fcff > 0).astype(int)
     
     racha_pos = positivos.rolling(k_pos, min_periods=k_pos).sum() == k_pos
 
+    # 4) Máscara final: último año que cumpla todo
     mascara = (fcff > 0) & racha_pos 
 
+    # Elegimos el último año válido; fallback: último FCFF positivo si no hay "estable"
     candidatos = mascara[mascara].index
     if len(candidatos) > 0:
         anio_corte = candidatos[-1]
@@ -179,6 +202,7 @@ def elegir_ultimo_fcff_estable(df,
         else:
             raise ValueError("No hay ningún FCFF positivo; revisá supuestos.")
 
+    # 5) Devolvemos corte
     serie_fcff_cortada = fcff.loc[:anio_corte]
     return anio_corte, serie_fcff_cortada
 
@@ -253,35 +277,6 @@ def dcf_sensitivity_matrix(
     df.columns.name = "WACC"
     return df
 
-def dcf_scenarios(
-    wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use
-):
-    """
-    Construye una matriz (DataFrame) con precio/acción para todos los pares (WACC, g).
-    Filas = g ; Columnas = WACC
-    """
-    waccs = np.atleast_1d(np.array(wacc_values, dtype=float))
-    gs = np.atleast_1d(np.array(g_values, dtype=float))
-
-    data = np.empty((gs.size, waccs.size), dtype=float)
-    for i, gi in enumerate(gs):
-        for j, wj in enumerate(waccs):
-            data[i, j] = valuacion_DCF(
-                free_cash_flows=free_cash_flows,
-                wacc=wj,
-                g=gi,
-                ticker=ticker, netdebt= netdebt
-            )[0]  
-
-    df = pd.DataFrame(
-        data,
-        index=[f"{gi:.4%}" for gi in gs],
-        columns=[f"{wj:.4%}" for wj in waccs],
-    )
-    df.index.name = "WACC/g"
-    df.columns.name = "WACC"
-    return df
-
 def crear_df_con_elasticidades(matriz_sensibilidades):
     
     valor_g = float(matriz_sensibilidades.index[math.ceil(len(matriz_sensibilidades.index)/2) - 1].strip('%')) / 100
@@ -301,14 +296,16 @@ def crear_df_con_elasticidades(matriz_sensibilidades):
     with np.errstate(divide='ignore', invalid='ignore'):
         elasticidades_w = variaciones_vi_wacc / cambios_pct_wacc
         elasticidades_g = variaciones_vi_gs / cambios_pct_gs
+        
+    # 1 bp igual a 0,0001
 
-    valores_bps = cambios_pct_gs * 100 
+    valores_bps = valores_g / 0.0001 - (valor_g / 0.0001)
 
-    valores_bps_wacc = cambios_pct_wacc * 100 
+    valores_bps_wacc = valores_wacc / 0.0001 - (valor_wacc / 0.0001)
 
-    elasticidades = pd.DataFrame({"Cambio Relativo WACC (%)": valores_bps_wacc,
+    elasticidades = pd.DataFrame({"Cambio en BPS WACC": valores_bps_wacc,
               'Elasticidades WACC': elasticidades_w,
-              "Cambio Relativo g (%)": valores_bps,
+              "Cambio en BPS g": valores_bps,
               'Elasticidades g': elasticidades_g}).fillna(0)
     
     return elasticidades, valores_bps_wacc, valores_bps
@@ -318,4 +315,3 @@ def calcular_desvios(todas_las_matrices):
     desvios = stacked.std(axis=0, ddof=1)
     
     return desvios
-

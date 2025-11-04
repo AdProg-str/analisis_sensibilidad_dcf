@@ -4,7 +4,7 @@ import numpy as np
 from funciones import (
     limpiar_excel, extraer_partidas, normalizar_indice, limpiar_partidas,
     get_netdebt, completar_partidas, calcular_nuevas_partidas, calcular_desvios,
-    elegir_ultimo_fcff_estable, valuacion_DCF, calcular_waccs, calcular_gs,
+    elegir_ultimo_fcff_estable, valuacion_DCF, calcular_waccs, calcular_gs, dcf_scenarios,
     dcf_sensitivity_matrix, calcular_waccs2, calcular_gs2, crear_df_con_elasticidades, acciones
 )
 import io
@@ -603,7 +603,7 @@ if st.session_state.processed_companies:
     with col_s3:
         n_steps = st.slider("Number of changes",
                             min_value=1,
-                            max_value=10,
+                            max_value=30,
                             value=4,
                             step=1,
                             help="Number of steps from the central value of WACC/g")
@@ -621,6 +621,8 @@ if st.session_state.processed_companies:
         help="Choose how to display sensitivity analysis results"
     )
     
+    boton_precios = st.toggle('Changes/Prices')
+    
     all_sensitivity_matrices = []
     
     all_elasticidades = []
@@ -628,7 +630,7 @@ if st.session_state.processed_companies:
     for ticker, valuation_data in company_valuations.items():
         
         with st.expander(f"#### {ticker}"):
-        
+            
             # st.markdown(f"#### {ticker}")
             
             # Calculate WACC and g arrays for sensitivity
@@ -645,8 +647,18 @@ if st.session_state.processed_companies:
                 wacc_values = calcular_waccs(base_wacc, cambio=wacc_sensitivity_range, n=n_steps)
                 g_values = calcular_gs(base_g, cambio=g_sensitivity_range, n=n_steps)        
             
+            
             # Generate sensitivity matrix
             sensitivity_matrix = dcf_sensitivity_matrix(
+            wacc_values=wacc_values,
+            g_values=g_values,
+            free_cash_flows=valuation_data['fcf'],
+            ticker=ticker,
+            netdebt=valuation_data['netdebt'],
+            g_to_use=g_rate
+            )
+
+            prices_matrix = dcf_scenarios(
             wacc_values=wacc_values,
             g_values=g_values,
             free_cash_flows=valuation_data['fcf'],
@@ -667,11 +679,17 @@ if st.session_state.processed_companies:
             
             # Display based on selected visualization type
             if viz_type in ["Table", "Both"]:
-                st.dataframe(
-                    sensitivity_matrix.style.format("{:.2f}%"),
-                    use_container_width=True
-                )
-                
+                if not boton_precios: 
+                    st.dataframe(
+                        sensitivity_matrix.style.format("{:.2f}%"),
+                        use_container_width=True
+                    )
+                else:
+                    st.dataframe(
+                        prices_matrix,
+                        use_container_width=True
+                    )
+                    
                 st.dataframe(elasticidades_df.style.format({
                             'Cambio en BPS WACC': '{:.2f}',
                             'Cambio en BPS g': '{:.2f}',
@@ -714,6 +732,7 @@ if st.session_state.processed_companies:
         indice = valores_g
         
         average_matrix = pd.DataFrame(sum([df.to_numpy() for df in all_sensitivity_matrices]) / len(all_sensitivity_matrices), columns=np.round(columnas), index=indice)
+        
         st.subheader("Aggregate Sensitivity Analysis (Average Across All Companies)")
         st.markdown("*Average percentage change across all uploaded companies*")
         
@@ -722,7 +741,13 @@ if st.session_state.processed_companies:
         st.markdown("*Standard Deviation*")
         desvio_matrix = pd.DataFrame(calcular_desvios(all_sensitivity_matrices), index=average_matrix.index, columns=average_matrix.columns)
         st.dataframe(desvio_matrix)
-    
+        
+    if len(all_sensitivity_matrices) > 1:  
+        elasti_prom = pd.DataFrame(sum([df.to_numpy() for df in all_elasticidades]) / len(all_elasticidades), columns=["Cambio Relativo WACC (%)", "Elasticidades WACC Promedio", "Cambio Relativo g (%)", "Elasticidades g Promedio"])
+        desvio_elast = pd.DataFrame(calcular_desvios(all_elasticidades), columns=elasti_prom.columns)
+        
+        st.dataframe(elasti_prom)
+        
     # Download Excel Report
     st.markdown(
     "<h3 style='color:#f89100ff; font-size:36px;'>6. Export Results</h1>",
@@ -754,20 +779,24 @@ if st.session_state.processed_companies:
             # Individual sensitivity matrices
             for idx, (ticker, valuation_data) in enumerate(company_valuations.items()):
                 sensitivity_matrix = all_sensitivity_matrices[idx]
-                elasticidad_matrx = all_elasticidades[idx]
+                elasticidad_matrix = all_elasticidades[idx]
                 
                 title_df = pd.DataFrame([[ticker]])
                 title_df.to_excel(writer, sheet_name=sheet_name, startrow=start_row, index=False, header=False)
                 title_df.to_excel(writer, sheet_name='Elasticidades', startrow=start_row, index=False, header=False)
                 
                 sensitivity_matrix.to_excel(writer, sheet_name=sheet_name, startrow=start_row + 1)
-                elasticidad_matrx.to_excel(writer, sheet_name='Elasticidades', startrow=start_row + 1)
+                elasticidad_matrix.to_excel(writer, sheet_name='Elasticidades', startrow=start_row + 1)
                 
                 start_row += n_steps * 2 + 4
             
             if absolute_changes and len(all_sensitivity_matrices) > 1:
                 average_matrix.to_excel(writer, sheet_name='Averages', startrow=1)
                 desvio_matrix.to_excel(writer, sheet_name='Std', startrow=1)
+                
+            if len(all_sensitivity_matrices) > 1:
+                elasti_prom.to_excel(writer, sheet_name='Prom Elast', startrow=1)
+                desvio_elast.to_excel(writer, sheet_name='Prom Elast', startrow=len(elasti_prom.iloc[:,0])+3)
         
         output.seek(0)
         return output
@@ -818,3 +847,4 @@ else:
 # Footer
 st.divider()
 st.caption("DCF Valuation & Sensitivity Analysis Tool | Supported tickers: " + ", ".join(acciones.keys()))
+

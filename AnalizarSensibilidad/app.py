@@ -603,7 +603,7 @@ if st.session_state.processed_companies:
     with col_s3:
         n_steps = st.slider("Number of changes",
                             min_value=1,
-                            max_value=10,
+                            max_value=30,
                             value=4,
                             step=1,
                             help="Number of steps from the central value of WACC/g")
@@ -620,7 +620,7 @@ if st.session_state.processed_companies:
         horizontal=True,
         help="Choose how to display sensitivity analysis results"
     )
-
+    
     boton_precios = st.toggle('Changes/Prices')
     
     all_sensitivity_matrices = []
@@ -630,7 +630,7 @@ if st.session_state.processed_companies:
     for ticker, valuation_data in company_valuations.items():
         
         with st.expander(f"#### {ticker}"):
-        
+            
             # st.markdown(f"#### {ticker}")
             
             # Calculate WACC and g arrays for sensitivity
@@ -688,7 +688,7 @@ if st.session_state.processed_companies:
                         prices_matrix,
                         use_container_width=True
                     )
-                
+                    
                 st.dataframe(elasticidades_df.style.format({
                             'Cambio en BPS WACC': '{:.2f}',
                             'Cambio en BPS g': '{:.2f}',
@@ -740,13 +740,15 @@ if st.session_state.processed_companies:
         st.markdown("*Standard Deviation*")
         desvio_matrix = pd.DataFrame(calcular_desvios(all_sensitivity_matrices), index=average_matrix.index, columns=average_matrix.columns)
         st.dataframe(desvio_matrix)
-
+        
     if len(all_sensitivity_matrices) > 1:  
         elasti_prom = pd.DataFrame(sum([df.to_numpy() for df in all_elasticidades]) / len(all_elasticidades), columns=["Cambio Relativo WACC (%)", "Elasticidades WACC Promedio", "Cambio Relativo g (%)", "Elasticidades g Promedio"])
+        elasti_prom.iloc[:,0] = crear_df_con_elasticidades(sensitivity_matrix)[4]
+        elasti_prom.iloc[:,2] = crear_df_con_elasticidades(sensitivity_matrix)[3]
         desvio_elast = pd.DataFrame(calcular_desvios(all_elasticidades), columns=elasti_prom.columns)
         
         st.dataframe(elasti_prom)
-    
+        
     # Download Excel Report
     st.markdown(
     "<h3 style='color:#f89100ff; font-size:36px;'>6. Export Results</h1>",
@@ -778,21 +780,21 @@ if st.session_state.processed_companies:
             # Individual sensitivity matrices
             for idx, (ticker, valuation_data) in enumerate(company_valuations.items()):
                 sensitivity_matrix = all_sensitivity_matrices[idx]
-                elasticidad_matrx = all_elasticidades[idx]
+                elasticidad_matrix = all_elasticidades[idx]
                 
                 title_df = pd.DataFrame([[ticker]])
                 title_df.to_excel(writer, sheet_name=sheet_name, startrow=start_row, index=False, header=False)
                 title_df.to_excel(writer, sheet_name='Elasticidades', startrow=start_row, index=False, header=False)
                 
                 sensitivity_matrix.to_excel(writer, sheet_name=sheet_name, startrow=start_row + 1)
-                elasticidad_matrx.to_excel(writer, sheet_name='Elasticidades', startrow=start_row + 1)
+                elasticidad_matrix.to_excel(writer, sheet_name='Elasticidades', startrow=start_row + 1)
                 
                 start_row += n_steps * 2 + 4
             
             if absolute_changes and len(all_sensitivity_matrices) > 1:
                 average_matrix.to_excel(writer, sheet_name='Averages', startrow=1)
                 desvio_matrix.to_excel(writer, sheet_name='Std', startrow=1)
-
+                
             if len(all_sensitivity_matrices) > 1:
                 elasti_prom.to_excel(writer, sheet_name='Prom Elast', startrow=1)
                 desvio_elast.to_excel(writer, sheet_name='Prom Elast', startrow=len(elasti_prom.iloc[:,0])+3)

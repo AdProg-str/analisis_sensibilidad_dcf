@@ -84,12 +84,12 @@ def normalizar_indice(nombre):
         if re.search(patron, nombre, re.IGNORECASE):
             return nuevo
     
-    return nombre  # si no matchea, lo deja igual
+    return nombre  
 
 
 def limpiar_partidas(partidas):
-    partidas = partidas[~partidas.isnull().all(axis=1)] # Elimino las filas que no poseen datos
-
+    partidas = partidas[~partidas.isnull().all(axis=1)] 
+    
     partidas = partidas.fillna(0)
 
     partidas = partidas.drop_duplicates()
@@ -154,7 +154,7 @@ def calcular_nuevas_partidas(partidas):
 
 def elegir_ultimo_fcff_estable(df,
                                fila_fcff="FCFF",
-                               k_pos=4,                  # racha mínima de años positivos,            
+                               k_pos=4,                           
                                ):
     """
     Devuelve:
@@ -162,17 +162,14 @@ def elegir_ultimo_fcff_estable(df,
       - serie_fcff_cortada (hasta anio_corte inclusive)
     Asume df con años en columnas y una fila 'FCFF'.
     """
-    fcff = df.loc[fila_fcff].astype(float)  # Serie: index=fila, columns=años -> tomamos fila
+    fcff = df.loc[fila_fcff].astype(float)  
 
-    # 1) Condición de positividad y racha de k años
     positivos = (fcff > 0).astype(int)
     
     racha_pos = positivos.rolling(k_pos, min_periods=k_pos).sum() == k_pos
 
-    # 4) Máscara final: último año que cumpla todo
     mascara = (fcff > 0) & racha_pos 
 
-    # Elegimos el último año válido; fallback: último FCFF positivo si no hay "estable"
     candidatos = mascara[mascara].index
     if len(candidatos) > 0:
         anio_corte = candidatos[-1]
@@ -183,7 +180,6 @@ def elegir_ultimo_fcff_estable(df,
         else:
             raise ValueError("No hay ningún FCFF positivo; revisá supuestos.")
 
-    # 5) Devolvemos corte
     serie_fcff_cortada = fcff.loc[:anio_corte]
     return anio_corte, serie_fcff_cortada
 
@@ -257,7 +253,7 @@ def dcf_sensitivity_matrix(
     df.index.name = "WACC/g"
     df.columns.name = "WACC"
     return df
-    
+
 def dcf_scenarios(
     wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use
 ):
@@ -306,22 +302,25 @@ def crear_df_con_elasticidades(matriz_sensibilidades):
     with np.errstate(divide='ignore', invalid='ignore'):
         elasticidades_w = variaciones_vi_wacc / cambios_pct_wacc
         elasticidades_g = variaciones_vi_gs / cambios_pct_gs
-        
-    # 1 bp igual a 0,0001
 
     valores_bps = valores_g / 0.0001 - (valor_g / 0.0001)
 
     valores_bps_wacc = valores_wacc / 0.0001 - (valor_wacc / 0.0001)
+    
+    valores_bps2 = (valores_g / valor_g - 1) * 100
 
-    elasticidades = pd.DataFrame({"Cambio en BPS WACC": valores_bps_wacc,
+    valores_bps_wacc2 = (valores_wacc / valor_wacc - 1) * 100
+
+    elasticidades = pd.DataFrame({"Cambio Relativo WACC (%)": valores_bps_wacc,
               'Elasticidades WACC': elasticidades_w,
-              "Cambio en BPS g": valores_bps,
+              "Cambio Relativo g (%)": valores_bps,
               'Elasticidades g': elasticidades_g}).fillna(0)
     
-    return elasticidades, valores_bps_wacc, valores_bps
+    return elasticidades, valores_bps_wacc, valores_bps, valores_bps2, valores_bps_wacc2
 
 def calcular_desvios(todas_las_matrices):
     stacked = np.stack(todas_las_matrices)
     desvios = stacked.std(axis=0, ddof=1)
     
     return desvios
+

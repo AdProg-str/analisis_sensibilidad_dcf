@@ -9,36 +9,17 @@ class Accion():
         self.wacc = wacc
         self.shares = shares  
 
-  
-apple = Accion(0.102, 15408)
-amazon = Accion(0.109, 10721)
-broadcom = Accion(0.149, 4778)
-berkshire = Accion(0.077, 1)
-google = Accion(0.101, 12447)
-jpmorgan = Accion(0.071, 2879)
-meta = Accion(0.109, 2614)
-microsoft = Accion(0.097, 7469)
-nvidia = Accion(0.151, 24940)
-tesla = Accion(0.132, 3498)
-meli = Accion(0.209, 50.73)
-abbv = Accion(0.066, 1770)
-costco = Accion(0.084, 445)
-homedepot = Accion(0.085, 1002)
-jhonson = Accion(0.065, 2418)
-lilly = Accion(0.087, 900)
-master = Accion(0.091, 906)
-netflix = Accion(0.105, 434)
-oracle = Accion(0.109, 2866)
-palantir = Accion(0.157, 2497)
-visa = Accion(0.089, 1967)
-walmart = Accion(0.083, 8081)
-exxon = Accion(0.07, 4296)
-
-
 acciones = {
-    "AAPL": apple, "AMZN": amazon, "AVGO": broadcom, "BRK": berkshire, "GOOGL": google, "JPM": jpmorgan, "META": meta, "MSFT": microsoft, 
-    "NVDA": nvidia, "TSLA": tesla, "MELI": meli, "ABBV": abbv, "COST": costco, "HD": homedepot, "JNJ": jhonson, "LLY": lilly, 
-    "MA": master, "NFLX": netflix, "ORCL": oracle, "PLTR": palantir, "V": visa, "WMT": walmart, "XOM": exxon
+    "AAPL": Accion(0.102, 15408),
+    "AMZN": Accion(0.109, 10721),
+    "AVGO": Accion(0.149, 4778),
+    "GOOGL": Accion(0.101, 12447),
+    "META": Accion(0.109, 2614),
+    "MSFT": Accion(0.097, 7469),
+    "NVDA": Accion(0.151, 24940),
+    "TSLA": Accion(0.132, 3498),
+    "ORCL": Accion(0.109, 2866),
+    "WMT": Accion(0.083, 8081),
 }
 
 def limpiar_excel(excel):
@@ -58,7 +39,7 @@ def limpiar_excel(excel):
 
 def extraer_partidas(excel_limpio):
     patterns = [
-        r'Total Debt$|Debt$|Net(?=.*\bdebt\b)',
+        r'^(?!.*\b(?:Re)?Payments\b).*(?:Total Debt$|Debt$|Net(?=.*\bdebt\b))',
         r'Equivalents\s\w*\sShort|\bEquivalents\b.*\bMarketable\b|\bCash\b.*Marketable|\bCash\b.*Short-term|\bCash\b.*Equivalents$',
         r'^\s*?Tax Rate\s\(\%\)',
         r'^\s*?Revenue$|^\s*?Net Revenue',

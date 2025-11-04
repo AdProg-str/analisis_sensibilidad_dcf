@@ -4,7 +4,7 @@ import numpy as np
 from funciones import (
     limpiar_excel, extraer_partidas, normalizar_indice, limpiar_partidas,
     get_netdebt, completar_partidas, calcular_nuevas_partidas, calcular_desvios,
-    elegir_ultimo_fcff_estable, valuacion_DCF, calcular_waccs, calcular_gs,
+    elegir_ultimo_fcff_estable, valuacion_DCF, calcular_waccs, calcular_gs, dcf_scenarios,
     dcf_sensitivity_matrix, calcular_waccs2, calcular_gs2, crear_df_con_elasticidades, acciones
 )
 import io

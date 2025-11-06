@@ -835,7 +835,7 @@ if st.session_state.processed_companies:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     st.download_button(
-        label="📥 Download Excel Report",
+        label="📥 Descargar Reporte en Excel",
         data=excel_report,
         file_name=f"DCF_Analysis_Report_{timestamp}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

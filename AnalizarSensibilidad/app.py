@@ -29,12 +29,12 @@ st.set_page_config(
 )
 
 st.markdown(
-    "<h1 style='color:#f89100ff; font-size:42px;'>📊 DCF Valuation & Sensitivity Analysis</h1>",
+    "<h1 style='color:#f89100ff; font-size:42px;'>📊 Valuación por DCF & Análisis de Sensibilidad</h1>",
     unsafe_allow_html=True
 )
 
 # Title and description
-st.markdown("Upload Excel files containing financial data to perform DCF valuation and sensitivity analysis")
+st.markdown("Suba las proyecciones para realizar la valuación por DCF y el análisis de sensibilidad.")
 
 # Initialize session state for processed data
 if 'processed_companies' not in st.session_state:
@@ -45,12 +45,12 @@ if 'saved_scenarios' not in st.session_state:
     st.session_state.saved_scenarios = []
 
 # File upload section
-st.header("1. Upload Financial Data")
+st.header("1. Carga de Datos Financieros")
 uploaded_files = st.file_uploader(
-    "Upload one or more Excel files",
+    "Suba uno o más archivos de Excel",
     type=['xlsx', 'xls'],
     accept_multiple_files=True,
-    help="Upload Excel files containing financial statements for company analysis"
+    help="Suba archivos de Excel con los estados financieros para el análisis de la empresa."
 )
 
 # Process uploaded files
@@ -69,7 +69,7 @@ if uploaded_files:
                 
                 # Verify ticker exists in our data
                 if ticker not in acciones:
-                    st.error(f"❌ Ticker '{ticker}' from file '{uploaded_file.name}' is not supported. Supported tickers: {', '.join(acciones.keys())}")
+                    st.error(f"❌ El ticker '{ticker}' del archivo '{uploaded_file.name}' no es compatible. Tickers compatibles: {', '.join(acciones.keys())}")
                     continue
                 
                 # Extract and process financial items
@@ -105,22 +105,22 @@ if uploaded_files:
                     'num_years': len(free_cash_flows)
                 }
                 
-                st.success(f"✅ Successfully processed: {uploaded_file.name} (Ticker: {ticker})")
+                st.success(f"✅ Procesado correctamente: {uploaded_file.name} (Ticker: {ticker})")
                 
             except Exception as e:
-                st.error(f"❌ Error processing {uploaded_file.name}: {str(e)}")
+                st.error(f"❌ Error al procesar {uploaded_file.name}: {str(e)}")
 
 # Display analysis if we have processed companies
 if st.session_state.processed_companies:
     # Additional Information
-    with st.expander("📋 View Processed Financial Data"):
+    with st.expander("📋 Ver Información Financiera Procesada"):
         for file_key, company_data in st.session_state.processed_companies.items():
             st.markdown(f"### {company_data['ticker']} - {file_key}")
             st.dataframe(company_data['partidas'].loc[['NOPAT',"D&A",'CAPEX','WK','FCFF']], use_container_width=True)
             st.markdown("---")
     
     st.markdown(
-        "<h3 style='color:#f89100ff; font-size:36px;'>2. Analysis Parameters</h1>",
+        "<h3 style='color:#f89100ff; font-size:36px;'>2. Parametros de la Valuación</h1>",
         unsafe_allow_html=True)
     
     # Get min/max values for sliders based on all companies
@@ -138,61 +138,61 @@ if st.session_state.processed_companies:
     
     with col1:
         g_rate = st.slider(
-            "Growth Rate (g)",
+            "Tasa de Crecimiento a Perpetuidad (g)",
             min_value=0.0,
             max_value=0.10,
             value=0.03,
             step=0.001,
             format="%.3f",
-            help="Terminal growth rate for perpetuity calculation"
+            help="Tasa de crecimiento terminal para el cálculo de la perpetuidad"
         )
-        st.caption(f"Selected: {g_rate:.1%}")
+        st.caption(f"Selección: {g_rate:.1%}")
     
     with col2:
         # Get unique default WACCs and use average as default
         wacc_override = st.slider(
-            "WACC Override",
+            "WACC",
             min_value=0.01,
             max_value=0.25,
             value=float(avg_wacc),
             step=0.001,
             format="%.3f",
-            help="Weighted Average Cost of Capital (will use company default if not changed)"
+            help="Costo Promedio Ponderado de Capital (se utilizará el valor predeterminado de la empresa si no se modifica)."
         )
-        st.caption(f"Selected: {wacc_override:.1%}")
+        st.caption(f"Selección: {wacc_override:.1%}")
     
     with col3:
         num_years_to_use = st.slider(
-            "Number of Years for DCF",
+            "Número de Años para el DCF",
             min_value=1,
             max_value=max_years,
             value=max_years,
             step=1,
-            help="Number of years of cash flows to use in the valuation"
+            help="Número de años de flujos de efectivo a usar en la valuación"
         )
-        st.caption(f"Using {num_years_to_use} years")
+        st.caption(f"Usando {num_years_to_use} años")
     
     # Use company default WACC checkbox
     use_default_wacc = st.checkbox(
-        "Use each company's default WACC",
+        "Usar el WACC predeterminado de cada empresa",
         value=True,
-        help="If checked, each company will use its own default WACC. Otherwise, the WACC Override value will be used for all companies."
+        help="Si se selecciona esta opción, cada empresa utilizará su propio WACC predeterminado. De lo contrario, se utilizará el valor de WACC predeterminado para todas las empresas."
     )
     
     # Scenario Analysis
-    st.subheader("💾 Scenario Management")
+    st.subheader("💾 Gestor de Escenarios")
     
     col_scenario1, col_scenario2 = st.columns([2, 1])
     
     with col_scenario1:
         scenario_name = st.text_input(
-            "Scenario Name",
-            placeholder="e.g., Base Case, Optimistic, Conservative",
-            help="Give this scenario a descriptive name"
+            "Nombre del Escenario",
+            placeholder="e.g., Escenario Base, Optimista, Conservador",
+            help="Ponle al escenario un nombre descriptivo"
         )
     
     with col_scenario2:
-        if st.button("💾 Save Current Scenario", type="primary", use_container_width=True):
+        if st.button("💾 Guardar el Escenario Actual", type="primary", use_container_width=True):
             if scenario_name:
                 scenario_data = {
                     'name': scenario_name,
@@ -203,9 +203,9 @@ if st.session_state.processed_companies:
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 st.session_state.saved_scenarios.append(scenario_data)
-                st.success(f"✅ Scenario '{scenario_name}' saved!")
+                st.success(f"✅ Escenario '{scenario_name}' guardado!")
             else:
-                st.error("Please enter a scenario name")
+                st.error("Por favor ingresa un nombre para el escenario")
     
     # Display saved scenarios
     if st.session_state.saved_scenarios:
@@ -222,11 +222,11 @@ if st.session_state.processed_companies:
             )
             
             # Scenario comparison feature
-            st.subheader("Compare Scenarios")
+            st.subheader("Comparación de Escenarios")
             selected_scenarios = st.multiselect(
-                "Select scenarios to compare",
+                "Seleccione escenarios para comparar",
                 options=[s['name'] for s in st.session_state.saved_scenarios],
-                help="Select 2 or more scenarios to compare their results"
+                help="Seleccione dos o más escenarios para comparar sus resultados."
             )
             
             if len(selected_scenarios) >= 2:
@@ -274,11 +274,11 @@ if st.session_state.processed_companies:
                 fig_comparison = px.bar(
                     comparison_df,
                     x='Ticker',
-                    y='Stock Value ($)',
-                    color='Scenario',
+                    y='Valor de la Acción ($)',
+                    color='Escenario',
                     barmode='group',
-                    title='Scenario Comparison - Stock Valuations',
-                    text='Stock Value ($)'
+                    title='Comparación de Escenarios - Valuaciones',
+                    text='Valor de la Acción ($)'
                 )
                 
                 fig_comparison.update_traces(texttemplate='$%{text:.2f}', textposition='outside')
@@ -291,7 +291,7 @@ if st.session_state.processed_companies:
             
             col_clear, col_space = st.columns([1, 3])
             with col_clear:
-                if st.button("🗑️ Clear All Scenarios"):
+                if st.button("🗑️ Borrar Todos los Escenarios"):
                     st.session_state.saved_scenarios = []
                     st.rerun()
     
@@ -299,7 +299,7 @@ if st.session_state.processed_companies:
     
     # Valuation Results
     st.markdown(
-    "<h3 style='color:#f89100ff; font-size:35px;'>3. DCF Valuation Results</h1>",
+    "<h3 style='color:#f89100ff; font-size:35px;'>3. Resultados de la Valuación</h1>",
     unsafe_allow_html=True)
 
     # Store valuations for each company
@@ -354,16 +354,16 @@ if st.session_state.processed_companies:
                 delta=None
             )
             st.caption(f"WACC: {wacc_to_use:.2%}")
-            st.caption(f"Growth: {g_rate:.2%}")
-            st.caption(f"Terminal Value (%): {valor_terminal:.2%}")
-            st.caption(f"Years: {num_years_to_use}")
+            st.caption(f"Crecimiento (g): {g_rate:.2%}")
+            st.caption(f"Peso del Valor Terminal: {valor_terminal:.2%}")
+            st.caption(f"Años: {num_years_to_use}")
     
     st.divider()
     
     # Comparative Charts
     if len(company_valuations) > 1:
         st.markdown(
-        "<h3 style='color:#f89100ff; font-size:36px;'>4. Comparative Analysis</h1>",
+        "<h3 style='color:#f89100ff; font-size:36px;'>4. Análisis Comparativo</h1>",
         unsafe_allow_html=True)
         
         # Prepare data for charts
@@ -386,15 +386,15 @@ if st.session_state.processed_companies:
                         color=stock_values,
                         colorscale='Viridis',
                         showscale=True,
-                        colorbar=dict(title="Value ($)")
+                        colorbar=dict(title="Valor ($)")
                     )
                 )
             ])
             
             fig_value.update_layout(
-                title="Stock Value Comparison",
-                xaxis_title="Company",
-                yaxis_title="Stock Value ($)",
+                title="Comparación del Valor de la Acción",
+                xaxis_title="Compañía",
+                yaxis_title="Valor de la Acción ($)",
                 height=400,
                 showlegend=False
             )
@@ -419,8 +419,8 @@ if st.session_state.processed_companies:
             ])
             
             fig_wacc.update_layout(
-                title="WACC Comparison",
-                xaxis_title="Company",
+                title="Comparación de WACCs",
+                xaxis_title="Compañía",
                 yaxis_title="WACC (%)",
                 height=400,
                 showlegend=False
@@ -434,7 +434,7 @@ if st.session_state.processed_companies:
         fig_combined.add_trace(go.Scatter(
             x=tickers_list,
             y=stock_values,
-            name='Stock Value',
+            name='Valor de la Acción',
             mode='lines+markers',
             yaxis='y',
             line=dict(width=3),
@@ -442,9 +442,9 @@ if st.session_state.processed_companies:
         ))
         
         fig_combined.update_layout(
-            title="Valuation Metrics Across Companies",
-            xaxis_title="Company",
-            yaxis_title="Stock Value ($)",
+            title="Métricas de Valuación por Empresa",
+            xaxis_title="Compañía",
+            yaxis_title="Valor de la Acción ($)",
             height=400,
             hovermode='x unified'
         )
@@ -454,24 +454,24 @@ if st.session_state.processed_companies:
         st.divider()
     
     # Historical Price Comparison
-    st.header("4.5. Historical Price vs Intrinsic Value")
+    st.header("4.5. Precio Histórico vs Valor Intrínseco")
     
-    with st.expander("📈 View Historical Price Comparison", expanded=False):
-        st.markdown("Compare calculated intrinsic values with actual market prices over the past year")
+    with st.expander("📈 Ver Comparación Histórica de Precios", expanded=False):
+        st.markdown("Comparar los valores intrínsecos calculados con los precios de mercado reales")
         
         # Time range selector
         time_period = st.selectbox(
             "Select Time Period",
-            ["1 Month", "3 Months", "6 Months", "1 Year", "2 Years"],
+            ["1 Mes", "3 Meses", "6 Meses", "1 Año", "2 Años"],
             index=3
         )
         
         period_map = {
-            "1 Month": 30,
-            "3 Months": 90,
-            "6 Months": 180,
-            "1 Year": 365,
-            "2 Years": 730
+            "1 Mes": 30,
+            "3 Meses": 90,
+            "6 Meses": 180,
+            "1 Año": 365,
+            "2 Años": 730
         }
         
         days = period_map[time_period]
@@ -495,7 +495,7 @@ if st.session_state.processed_companies:
                     fig_hist.add_trace(go.Scatter(
                         x=hist_data.index,
                         y=hist_data['Close'],
-                        name='Market Price',
+                        name='Precio de Mercado',
                         line=dict(color='blue', width=2),
                         mode='lines'
                     ))
@@ -505,7 +505,7 @@ if st.session_state.processed_companies:
                     fig_hist.add_trace(go.Scatter(
                         x=hist_data.index,
                         y=[intrinsic_value] * len(hist_data),
-                        name='Calculated Intrinsic Value',
+                        name='Valor Intrínseco Calculado',
                         line=dict(color='red', width=2, dash='dash'),
                         mode='lines'
                     ))
@@ -515,9 +515,9 @@ if st.session_state.processed_companies:
                     difference_pct = ((intrinsic_value - current_price) / current_price) * 100
                     
                     fig_hist.update_layout(
-                        title=f"{ticker} - Market Price vs Intrinsic Value",
-                        xaxis_title="Date",
-                        yaxis_title="Price ($)",
+                        title=f"{ticker} - Precio de Mercado vs. Valor Intrínseco",
+                        xaxis_title="Fecha",
+                        yaxis_title="Precio ($)",
                         height=400,
                         hovermode='x unified',
                         legend=dict(
@@ -535,93 +535,93 @@ if st.session_state.processed_companies:
                     col_m1, col_m2, col_m3 = st.columns(3)
                     
                     with col_m1:
-                        st.metric("Current Market Price", f"${current_price:.2f}")
+                        st.metric("Precio de Mercado Actual", f"${current_price:.2f}")
                     
                     with col_m2:
-                        st.metric("Calculated Intrinsic Value", f"${intrinsic_value:.2f}")
+                        st.metric("Valor Intrínseco Calculado", f"${intrinsic_value:.2f}")
                     
                     with col_m3:
                         st.metric(
-                            "Difference", 
+                            "Diferencia", 
                             f"{difference_pct:.2f}%",
                             delta=f"${intrinsic_value - current_price:.2f}",
                             delta_color="normal" if difference_pct > 0 else "inverse"
                         )
                     
                     if difference_pct > 0:
-                        st.success(f"📊 {ticker} appears **undervalued** by {abs(difference_pct):.2f}% based on DCF analysis")
+                        st.success(f"📊 {ticker} parece **subvaluada** en un {abs(difference_pct):.2f}% en base a la valuación por DCF")
                     elif difference_pct < 0:
-                        st.warning(f"📊 {ticker} appears **overvalued** by {abs(difference_pct):.2f}% based on DCF analysis")
+                        st.warning(f"📊 {ticker} parece **sobrevaluada** en un {abs(difference_pct):.2f}% en base a la valuación por DCF")
                     else:
-                        st.info(f"📊 {ticker} is trading at approximately its calculated intrinsic value")
+                        st.info(f"📊 {ticker} cotiza apróximadamente a su valor intrínseco calculado.")
                     
                     st.markdown("---")
                 else:
-                    st.warning(f"No historical data available for {ticker}")
+                    st.warning(f"No hay datos históricos disponibles para {ticker}")
                     
             except Exception as e:
-                st.error(f"Error fetching historical data for {ticker}: {str(e)}")
+                st.error(f"Error al recuperar los datos históricos para {ticker}: {str(e)}")
         
         st.divider()
     
     # Sensitivity Analysis
     st.markdown(
-    "<h3 style='color:#f89100ff; font-size:36px;'>5. Sensitivity Analysis</h1>",
+    "<h3 style='color:#f89100ff; font-size:36px;'>5. Análisis de Sensibilidad</h1>",
     unsafe_allow_html=True)
 
 
     # Parameters for sensitivity analysis
-    st.subheader("Sensitivity Matrix Parameters")
+    st.subheader("Parámetros de la Matriz de Sensibilidad")
     col_s1, col_s2, col_s3 = st.columns(3)
     
-    absolute_changes = st.checkbox('Absolute Change')
+    absolute_changes = st.checkbox('Usar Cambios Absolutos')
     
     with col_s1:
         wacc_sensitivity_pct = st.slider(
-            "WACC Variation Range (±%)",
+            "Variación en el WACC (±%)",
             min_value=0.5,
             max_value=10.0,
             value=1.0,
             step=0.1,
-            help="Percentage range to vary WACC around the base value"
+            help="Rango porcentual para variar el WACC en torno al valor base"
         )
         wacc_sensitivity_range = wacc_sensitivity_pct / 100
         st.caption(f'Cambio de {wacc_sensitivity_pct*100} BPS')
         
     with col_s2:
         g_sensitivity_pct = st.slider(
-            "Growth Rate Variation Range (±%)",
+            "Variación en la Tasa de Crecimiento g(±%)",
             min_value=0.5,
             max_value=10.0,
             value=1.0,
             step=0.1,
-            help="Percentage range to vary growth rate around the base value"
+            help="Rango porcentual para variar la g en torno al valor base"
         )
         g_sensitivity_range = g_sensitivity_pct / 100
         st.caption(f'Cambio de {g_sensitivity_pct*100} BPS')
         
     with col_s3:
-        n_steps = st.slider("Number of changes",
+        n_steps = st.slider("Número de Cambios",
                             min_value=1,
                             max_value=30,
                             value=4,
                             step=1,
-                            help="Number of steps from the central value of WACC/g")
+                            help="Número de pasos desde el valor central de WACC/g")
     
     # Generate sensitivity matrices for each company
-    st.subheader("Individual Company Sensitivity Analysis")
-    tipo_de_cambio = 'absolute' if absolute_changes else 'percentage'
-    st.markdown(f"*Values show {tipo_de_cambio} change from base case valuation*")
+    st.subheader("Análisis de Sensibilidad de cada Empresa Individual")
+    tipo_de_cambio = 'absoluto' if absolute_changes else 'relativo'
+    st.markdown(f"*Los valores muestran el cambio {tipo_de_cambio} con respecto a la valoración del caso base.*")
     
     # Add visualization toggle
     viz_type = st.radio(
-        "Visualization Type:",
-        ["Table", "Heatmap", "Both"],
+        "Tipo de Visualización:",
+        ["Tabla", "Mapa de Calor", "Ambos"],
         horizontal=True,
-        help="Choose how to display sensitivity analysis results"
+        help="Elija cómo mostrar los resultados del análisis de sensibilidad"
     )
     
-    boton_precios = st.toggle('Changes/Prices')
+    boton_precios = st.toggle('Matriz de Precios')
     
     all_sensitivity_matrices = []
     
@@ -677,7 +677,7 @@ if st.session_state.processed_companies:
             all_elasticidades.append(elasticidades_df)
             
             # Display based on selected visualization type
-            if viz_type in ["Table", "Both"]:
+            if viz_type in ["Tabla", "Ambos"]:
                 if not boton_precios: 
                     st.dataframe(
                         sensitivity_matrix.style.format("{:.2f}%"),
@@ -697,7 +697,7 @@ if st.session_state.processed_companies:
                             }),
                             use_container_width=True)
             
-            if viz_type in ["Heatmap", "Both"]:
+            if viz_type in ["Mapa de Calor", "Ambos"]:
                 # Create interactive Plotly heatmap
                 fig = go.Figure(data=go.Heatmap(
                     z=sensitivity_matrix.values,
@@ -707,15 +707,15 @@ if st.session_state.processed_companies:
                     text=sensitivity_matrix.values,
                     texttemplate='%{text:.2f}%',
                     textfont={"size": 10},
-                    colorbar=dict(title="% Change"),
+                    colorbar=dict(title="Cambio %"),
                     hoverongaps=False,
-                    hovertemplate='WACC: %{x}<br>g: %{y}<br>Change: %{z:.2f}%<extra></extra>'
+                    hovertemplate='WACC: %{x}<br>g: %{y}<br>Cambio: %{z:.2f}%<extra></extra>'
                 ))
                 
                 fig.update_layout(
-                    title=f"{ticker} Sensitivity Heatmap",
+                    title=f"Mapa de Calor de {ticker}",
                     xaxis_title="WACC",
-                    yaxis_title="Growth Rate (g)",
+                    yaxis_title="Tasa de Crecimiento (g)",
                     height=500,
                     font=dict(size=11)
                 )
@@ -732,12 +732,12 @@ if st.session_state.processed_companies:
         
         average_matrix = pd.DataFrame(sum([df.to_numpy() for df in all_sensitivity_matrices]) / len(all_sensitivity_matrices), columns=np.round(columnas), index=indice)
         
-        st.subheader("Aggregate Sensitivity Analysis (Average Across All Companies)")
-        st.markdown("*Average percentage change across all uploaded companies*")
+        st.subheader("Análisis de Sensibilidad Agregado (promedio de todas las empresas)")
+        st.markdown("*Cambio porcentual promedio de todas las empresas cargadas*")
         
         st.dataframe(average_matrix)
         
-        st.markdown("*Standard Deviation*")
+        st.markdown("*Desviación Estándar de los Resultados*")
         desvio_matrix = pd.DataFrame(calcular_desvios(all_sensitivity_matrices), index=average_matrix.index, columns=average_matrix.columns)
         st.dataframe(desvio_matrix)
         
@@ -751,7 +751,7 @@ if st.session_state.processed_companies:
         
     # Download Excel Report
     st.markdown(
-    "<h3 style='color:#f89100ff; font-size:36px;'>6. Export Results</h1>",
+    "<h3 style='color:#f89100ff; font-size:36px;'>6. Exportar Resultados</h1>",
     unsafe_allow_html=True)
     
     def create_excel_report(company_valuations, all_sensitivity_matrices, avg_matrix=None):
@@ -843,8 +843,8 @@ if st.session_state.processed_companies:
     )
     
 else:
-    st.info("👆 Please upload one or more Excel files to begin the analysis")
+    st.info("👆 Por favor, suba uno o más archivos de Excel para comenzar el análisis")
 
 # Footer
 st.divider()
-st.caption("DCF Valuation & Sensitivity Analysis Tool | Supported tickers: " + ", ".join(acciones.keys()))
+st.caption("Herramiento de Valuación por DCF y Análisis de Sensibilidad | Tickers Soportados: " + ", ".join(acciones.keys()))

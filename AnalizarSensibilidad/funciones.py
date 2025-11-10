@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-import yfinance as yf
 import re
 import math
 
+# Acá se define la clase Accion() para la creación de los objetos que contendrán el WACC y la cantidad de acciones de cada compañía
 class Accion():
     def __init__(self, wacc, shares):
         self.wacc = wacc
@@ -22,6 +22,9 @@ acciones = {
     "WMT": Accion(0.083, 8081),
 }
 
+# Las siguientes 4 funciones se encargan de la limpieza y extracción de datos 
+# de los Excels de Bloomberg con las proyecciones cargados en la aplicación.
+# El resultado final es un dataframe limpio con las cuentas relevantes para realizar la valuación por DCF
 def limpiar_excel(excel):
     excel.index = excel.iloc[:,0]
     ticker = excel.index[0].split()[0]
@@ -86,7 +89,6 @@ def normalizar_indice(nombre):
     
     return nombre  
 
-
 def limpiar_partidas(partidas):
     partidas = partidas[~partidas.isnull().all(axis=1)] 
     
@@ -108,6 +110,8 @@ def limpiar_partidas(partidas):
             
     return partidas
 
+# La siguiente función se encarga de utilizar el dataframe anterior ya sea para extraer 
+# la deuda neta directamente si la partida existe en los datos y en caso contrario calcularla
 def get_netdebt(partidas):
     if 'Net Debt' in partidas.index:
         netdebt = float(partidas.loc['Net Debt', partidas.columns[0]])
@@ -125,6 +129,11 @@ def get_netdebt(partidas):
         netdebt = float(partidas.loc['LT Debt', partidas.columns[0]] - partidas.loc['Cash', partidas.columns[0]]) 
         return netdebt
     
+# Las siguientes 2 funciones se encargan de:
+#  Función: completar_partidas()
+#  - Realizar una validación de los datos númericos que se encuentran el dataframe con las proyecciones.
+#    En caso de que hubiese celdas en el excel con valores inválidos que pudieran interrumpir el código los reemplaza para evitar errores.
+
 def completar_partidas(partidas):
     for cuenta in partidas.index:
         if partidas.loc[cuenta].eq(0).any():
@@ -141,6 +150,12 @@ def completar_partidas(partidas):
             
     return partidas
 
+#  Función: calcular_nuevas_partidas()
+#  - La función completa el dataset financiero generando las partidas operativas necesarias para calcular el FCFF. En particular, 
+#   estima el Capital de Trabajo Neto (WK), su variación interanual (Change WK), el beneficio operativo neto después de impuestos (NOPAT) 
+#   y finalmente el Free Cash Flow to the Firm (FCFF). A partir de estas nuevas variables, la función devuelve un DataFrame listo 
+#   para ser utilizado en las etapas posteriores del modelo DCF.
+
 def calcular_nuevas_partidas(partidas):
     partidas.loc['WK'] = (partidas.loc['Current Assets'] - partidas.loc['Cash']) - partidas.loc['Current Liabilities']
 
@@ -152,10 +167,9 @@ def calcular_nuevas_partidas(partidas):
 
     return partidas
 
-def elegir_ultimo_fcff_estable(df,
-                               fila_fcff="FCFF",
-                               k_pos=4,                           
-                               ):
+# La función de abajo se encarga de elegir el año de corte en el cual se estabiliza el FCFF, 
+# usa como parametro que los flujos de los últimos 4 años no sean negativos
+def elegir_ultimo_fcff_estable(df, fila_fcff="FCFF", k_pos=4):
     """
     Devuelve:
       - anio_corte (columna)
@@ -183,6 +197,7 @@ def elegir_ultimo_fcff_estable(df,
     serie_fcff_cortada = fcff.loc[:anio_corte]
     return anio_corte, serie_fcff_cortada
 
+# Esta función se encarga de realizar la valuación por flujos de caja descontados y devolver el valor resultante.
 def valuacion_DCF(wacc, g, free_cash_flows, ticker, netdebt):
     
     shares = acciones[ticker].shares
@@ -209,6 +224,8 @@ def valuacion_DCF(wacc, g, free_cash_flows, ticker, netdebt):
     
     return [stock_value, perpetuidad]
 
+# Las próximas 4 funciones se encargan de calcular el rango de valores a utilizar en las valuaciones, tanto los valores para el WACC como para la g
+# Las funciones que poseen un 2 al final se encargan de calcular los rangos con cambios absolutos en BPS, el resto con cambios relativos (%)
 def calcular_waccs(wacc_central, cambio=0.01, n=5):
     wacc_array = wacc_central * (np.linspace(1 - n*cambio, 1 + n*cambio, 2*n + 1))
     return wacc_array
@@ -225,9 +242,9 @@ def calcular_gs2(g_central, cambio=0.01, n=2):
     g_array = g_central + (np.linspace(-n*cambio, n*cambio, 2*n + 1))
     return g_array
 
-def dcf_sensitivity_matrix(
-    wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use
-):
+# El código de a continuación se encarga de la construcción de la matriz de sensibilidades, dicha matriz muestra las variaciones porcentuales
+# en torno al precio calculado en el escenario base.
+def dcf_sensitivity_matrix(wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use):
     """
     Construye una matriz (DataFrame) con precio/acción para todos los pares (WACC, g).
     Filas = g ; Columnas = WACC
@@ -250,13 +267,13 @@ def dcf_sensitivity_matrix(
         index=[f"{gi:.4%}" for gi in gs],
         columns=[f"{wj:.4%}" for wj in waccs],
     )
-    df.index.name = "WACC/g"
+    df.index.name = "g/WACC"
     df.columns.name = "WACC"
     return df
 
-def dcf_scenarios(
-    wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use
-):
+# La siguiente función se encarga de la construcción de la matriz de sensibilidadades pero mostrando los distintos rangos de precios en lugar
+# de las variaciones porcentuales.
+def dcf_scenarios(wacc_values, g_values, free_cash_flows, ticker, netdebt, g_to_use):
     """
     Construye una matriz (DataFrame) con precio/acción para todos los pares (WACC, g).
     Filas = g ; Columnas = WACC
@@ -283,6 +300,7 @@ def dcf_scenarios(
     df.columns.name = "WACC"
     return df
 
+# La función crear_df_con_elasticidades() se encarga de crear la tabla con las elasticidades hacia el WACC/g 
 def crear_df_con_elasticidades(matriz_sensibilidades):
     
     valor_g = float(matriz_sensibilidades.index[math.ceil(len(matriz_sensibilidades.index)/2) - 1].strip('%')) / 100
@@ -303,21 +321,21 @@ def crear_df_con_elasticidades(matriz_sensibilidades):
         elasticidades_w = variaciones_vi_wacc / cambios_pct_wacc
         elasticidades_g = variaciones_vi_gs / cambios_pct_gs
 
-    valores_bps = valores_g / 0.0001 - (valor_g / 0.0001)
+    valores_bps_avg = valores_g / 0.0001 - (valor_g / 0.0001)
+    valores_bps = (valores_g / valor_g - 1) * 100
 
-    valores_bps_wacc = valores_wacc / 0.0001 - (valor_wacc / 0.0001)
-    
-    valores_bps2 = (valores_g / valor_g - 1) * 100
-
-    valores_bps_wacc2 = (valores_wacc / valor_wacc - 1) * 100
+    valores_bps_wacc_avg = valores_wacc / 0.0001 - (valor_wacc / 0.0001)
+    valores_bps_wacc = (valores_wacc / valor_wacc - 1) * 100
 
     elasticidades = pd.DataFrame({"Cambio Relativo WACC (%)": valores_bps_wacc,
               'Elasticidades WACC': elasticidades_w,
               "Cambio Relativo g (%)": valores_bps,
               'Elasticidades g': elasticidades_g}).fillna(0)
     
-    return elasticidades, valores_bps_wacc, valores_bps, valores_bps2, valores_bps_wacc2
+    return elasticidades, valores_bps_wacc_avg, valores_bps_avg, valores_bps, valores_bps_wacc
 
+# La siguiente función se encarga de calcular los desvíos, puede ser aplicada a cualquier conjunto de matrices con resultados.
+# En este caso puntual se uso para calcular el desvío de las variaciones de precio entre compañias.
 def calcular_desvios(todas_las_matrices):
     stacked = np.stack(todas_las_matrices)
     desvios = stacked.std(axis=0, ddof=1)

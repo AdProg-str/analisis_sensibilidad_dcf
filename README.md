@@ -1,7 +1,7 @@
 # Análisis de Sensibilidad del Modelo DCF: WACC, g y Valor Intrínseco  
 Repositorio asociado al Trabajo de Investigación Final (TIF) — Licenciatura en Finanzas Universidad Argentina de la Empresa (UADE)
 
-Este repositorio contiene el código desarrollado para el Trabajo de Investigación Final (TIF), cuyo objetivo es analizar la sensibilidad del valor intrínseco calculado mediante el modelo de Flujos de Caja Descontados (Discounted Cash Flow, DCF) frente a variaciones controladas en el Costo Promedio Ponderado de Capital (WACC) y la tasa de crecimiento a perpetuidad (g).
+Este repositorio contiene el código desarrollado para el Trabajo de Investigación Final (TIF), cuyo objetivo es analizar la sensibilidad del valor intrínseco calculado mediante el modelo de Flujos de Caja Descontados (Discounted Cash Flow, DCF) frente a variaciones controladas en el Costo Promedio Ponderado de Capital (WACC) y la tasa de crecimiento a perpetuidad (g), todo esto en el top 10 empresas de mayor capitalización a agosto 2025. 
 
 El trabajo completo puede consultarse en el archivo PDF incluido en este repositorio.
 

@@ -5,6 +5,8 @@ Este repositorio contiene el código desarrollado para el Trabajo de Investigaci
 
 El trabajo completo puede consultarse en el archivo PDF incluido en este repositorio.
 
+La herramienta se encuentra disponible para uso en el siguiente link: https://sensibilityanalysis.streamlit.app/
+
 ---
 
 ## Objetivo del Trabajo
@@ -102,7 +104,7 @@ La bibliografía completa se encuentra en el PDF del TIF.
 ---
 
 ## Autores
-Nicolas Etienne Prandi y Adrian Félix Parisi
+Nicolás Etienne Prandi y Adrián Félix Parisi
 
 Trabajo realizado en el marco del Trabajo de Investigación Final (TIF) de la Licenciatura en Finanzas de la Universidad Argentina de la Empresa (UADE). Incluye análisis empírico, código en Python y visualizaciones desarrolladas con Streamlit.
 

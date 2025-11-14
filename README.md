@@ -102,7 +102,7 @@ La bibliografía completa se encuentra en el PDF del TIF.
 ---
 
 ## Autores
-Nicolas Etienne Prandi\nAdrian Félix Parisi
+Nicolas Etienne Prandi y Adrian Félix Parisi
 
 Trabajo realizado en el marco del Trabajo de Investigación Final (TIF) de la Licenciatura en Finanzas de la Universidad Argentina de la Empresa (UADE). Incluye análisis empírico, código en Python y visualizaciones desarrolladas con Streamlit.
 

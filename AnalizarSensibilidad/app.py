@@ -507,7 +507,7 @@ if st.session_state.processed_companies:
     st.subheader("Parámetros de la Matriz de Sensibilidad")
     col_s1, col_s2, col_s3 = st.columns(3)
     
-    absolute_changes = st.checkbox('Usar cambios absolutos')
+    absolute_changes = st.checkbox('Usar cambios absolutos', value=True)
 
     # Magnitud de cambio en WACC (ui en %, convertido a fracción)
     with col_s1:
@@ -515,7 +515,7 @@ if st.session_state.processed_companies:
             "Variación del WACC",
             min_value=0.5,
             max_value=10.0,
-            value=1.0,
+            value=0.5,
             step=0.1,
             help="Cambios aplicables al valor base del WACC"
         )
@@ -533,7 +533,7 @@ if st.session_state.processed_companies:
             "Variación en la tasa g",
             min_value=0.5,
             max_value=10.0,
-            value=1.0,
+            value=0.5,
             step=0.1,
             help="Cambios aplicables al valor base de la g"
         )

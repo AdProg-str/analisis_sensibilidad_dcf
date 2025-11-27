@@ -293,7 +293,7 @@ if st.session_state.processed_companies:
                     for file_key, company_data in st.session_state.processed_companies.items():
                         ticker = company_data['ticker']
                         
-                        wacc_to_use = company_data['default_wacc'] if scenario['Usar WACC default'] else scenario['wacc_override']
+                        wacc_to_use = company_data['default_wacc'] if scenario['Usar WACC default'] else scenario['WACC']
                         fcf_to_use = company_data['free_cash_flows'][:scenario['Años']]
                         
                         stock_value = valuacion_DCF(
@@ -331,7 +331,7 @@ if st.session_state.processed_companies:
                     color='Escenario',
                     barmode='group',
                     title='Comparación de Escenarios - Valuación',
-                    text='Valor por Acción ($)'
+                    text='Valor de la Acción ($)'
                 )
                 
                 fig_comparison.update_traces(texttemplate='$%{text:.2f}', textposition='outside')

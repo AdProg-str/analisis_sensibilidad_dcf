@@ -760,12 +760,11 @@ if st.session_state.processed_companies:
             
             # Promedios y desvíos
             if absolute_changes and len(all_sensitivity_matrices) > 1:
-                average_matrix.to_excel(writer, sheet_name='Averages', startrow=1)
-                desvio_matrix.to_excel(writer, sheet_name='Std', startrow=1)
+                average_matrix.to_excel(writer, sheet_name='Promedio', startrow=1)
+                desvio_matrix.to_excel(writer, sheet_name='Desvío', startrow=1)
                 
             if len(all_sensitivity_matrices) > 1:
                 elasti_prom.to_excel(writer, sheet_name='Prom Elast', startrow=1)
-                desvio_elast.to_excel(writer, sheet_name='Prom Elast', startrow=len(elasti_prom.iloc[:,0])+3)
         
         output.seek(0) # Rebobina el buffer antes de retornarlo
         return output
